@@ -1,0 +1,32 @@
+---
+- name: Copy Filebeat configuration.
+  template:
+    src: filebeat.yml.j2
+    dest: "/etc/filebeat/filebeat.yml"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart filebeat
+  tags: file_test
+
+- name: Ensure Filebeat SSL key pair directory exists.
+  file:
+    path: "/etc/ssl"
+    state: directory
+#  when: filebeat_ssl_key_file | bool
+  tags: file_test
+
+- name: Copy SSL key and cert for filebeat.
+  copy:
+    src: "{{ item }}"
+    dest: "{{ filebeat_ssl_dir }}/{{ item | basename }}"
+    mode: 0644
+  with_items:
+    - "{{ filebeat_ssl_key_file }}"
+    - "{{ filebeat_ssl_certificate_file }}"
+    - "{{ certificate_authorities }}"
+  notify: restart filebeat
+#  when:
+#    - filebeat_ssl_key_file | bool
+#    - filebeat_ssl_certificate_file == false
+  tags: file_test
